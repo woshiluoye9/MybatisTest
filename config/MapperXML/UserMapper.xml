@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace 与 id 一同组合成为一个sql执行的statement的唯一标识，
+ 参数类型 parameterType, 返回值类型-->
+
+<mapper namespace="com.dustin.mapper.UserMapper">
+    <!-- sql 片段， 方便sql语句的复用 ，一般是基于单表来定义sql片段 -->
+    <sql id="queryUserByVo">
+        <!-- 判断条件是什么-->
+        <if test="user.username != null and user.username != ''">
+            and username = #{user.username}
+        </if>
+        <if test="user.sex != null and user.sex != ''">
+            and sex = #{user.sex}
+        </if>
+        <!-- collection 是传进来的参数名称， item 是当前变量， open 是语句以什么开头，
+         close 是以什么结尾， separator 是遍历每一个元素的分隔符-->
+        <if test="ids != null">
+            <foreach collection="ids" item="id" open=" and id in (" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </sql>
+
+
+    <!-- id 为 此resultMap 的唯一标识，在下面的select 语句中 的 resultMap 处使用，
+     type 为Java编写的返回的pojo对象的引用，此处使用的是别名，别名在sqlMapConfig中定义-->
+    <resultMap id="UserCustomer" type="UserCustomer">
+        <id property="customer_id" column="id"/>
+        <result property="customer_username" column="username"/>
+        <result property="customer_address" column="address"/>
+        <result property="customer_sex" column="sex"/>
+        <result property="customer_birthday" column="birthday"/>
+    </resultMap>
+    <!--通过id 查询用户信息-->
+    <select id="queryUserById" parameterType="int" resultType="com.dustin.dao.User">
+        select * from user where id = #{id}
+    </select>
+
+    <!--通过name查询用户信息-->
+
+    <!-- 根据用户名称模糊查询用户信息，可能返回多条
+     resultType：指定就是单条记录所映射的java对象 类型
+     ${}:表示拼接sql串，将接收到参数的内容不加任何修饰拼接在sql中。
+    使用${}拼接sql，引起 sql注入
+     ${value}：接收输入 参数的内容，如果传入类型是简单类型，${}中只能使用value
+     -->
+    <!--#{}表示一个占位符号，通过#{}可以实现preparedStatement向占位符中设置值，自动进行java类型和jdbc类型转换，
+    #{}可以有效防止sql注入。 #{}可以接收简单类型值或pojo属性值。
+    如果parameterType传输单个简单类型值，#{}括号中可以是value或其它名称。
+
+    ${}表示拼接sql串，通过${}可以将parameterType 传入的内容拼接在sql中且不进行jdbc类型转换，
+    ${}可以接收简单类型值或pojo属性值，如果parameterType传输单个简单类型值，
+    ${}括号中只能是value。
+-->
+    <select id="queryUserByName" parameterType="java.lang.String" resultType="com.dustin.dao.User">
+        select * from User where username like '%${value}%'
+    </select>
+
+
+    <!--使用动态字符串拼接-->
+    <select id="queryUserByUserQueryVo" parameterType="com.dustin.dao.UserQueryVo" resultMap="UserCustomer">
+        select * from User
+        <where>
+            <!--引用sql 的ID， 如果sql片段不在本地mapper中，需要加上前缀 namespace -->
+            <include refid="queryUserByVo"/>
+        </where>
+    </select>
+
+
+
+    <!--添加用户-->
+    <insert id="insertUser" parameterType="com.dustin.dao.User">
+        <!--
+          将插入数据的主键（自增的）返回，返回到user对象中
+          SELECT LAST_INSERT_ID()：得到刚insert进去记录的主键值，只适用与自增主键
+
+          keyProperty：将查询到主键值设置到parameterType指定的对象的哪个属性
+          order：SELECT LAST_INSERT_ID()执行顺序，相对于insert语句来说它的执行顺序
+          resultType：指定SELECT LAST_INSERT_ID()的结果类型
+        -->
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into user(username, birthday, sex, address ) values(#{username}, #{birthday}, #{sex}, #{address})
+
+        <!--&lt;!&ndash; 针对函数生成的的一个id， 则id的生成返回要在insert语句之前&ndash;&gt;-->
+        <!--<selectKey keyProperty="id" order="BEFORE" resultType="java.lang.String">-->
+            <!--SELECT uuid()-->
+        <!--</selectKey>-->
+        <!--insert into user(id, username, birthday, sex, address ) values(#{id}, #{name}, #{birthday}, #{sex}, #{address})-->
+    </insert>
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!-- 加载属性文件 -->
+    <properties resource="db.properties">
+        <!--properties中还可以配置一些属性名和属性值  -->
+        <!-- <property name="" value=""/> -->
+    </properties>
+
+    <!--全局设置参数-->
+    <!--<settings>-->
+    <!--</settings>-->
+
+    <typeAliases>
+        <!--单个类的别名的添加-->
+        <typeAlias type="com.dustin.dao.User" alias="User"/>
+        <typeAlias type="com.dustin.dao.UserCustomer" alias="UserCustomer"/>
+
+        <!--在实际的编程情况中，往往是有多个简单的对象，他们放置在同一个包下，
+        通过package属性可以扫描包下的所有类，同时给他们以  类的名字 作为  别名 -->
+        <!-- 批量多个类的别名的添加-->
+        <package name="com.dustin.dao"/>
+    </typeAliases>
+    <!-- 和spring整合后 environments配置将废除-->
+    <environments default="development">
+        <environment id="development">
+            <!-- 使用jdbc事务管理，mybatis控制事务-->
+            <transactionManager type="JDBC"/>
+            <!-- 数据库连接池，由mybatis进行管理-->
+            <dataSource type="POOLED">
+                <property name="driver" value="${jdbc.driver}"/>
+                <property name="url" value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.username}"/>
+                <property name="password" value="${jdbc.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!--配置映射文件，文件里的内容是对User这张表的SQL语句-->
+    <mappers>
+        <mapper resource="SqlMap/User.xml"/>
+        <mapper resource="MapperXML/UserMapper.xml"/>
+        <!-- 批量加载mapper
+指定mapper接口的包名，mybatis自动扫描包下边所有mapper接口进行
+加载遵循一些规范：
+1. 需要将mapper接口类名和mapper.xml映射文件名称保持一致
+2. 且放在同一个目录中
+上边规范的前提是：使用的是mapper代理方法
+ -->
+        <!--<package name="com.dustin.mapper"/>-->
+    </mappers>
+
+</configuration>
